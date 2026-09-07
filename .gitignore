@@ -1,0 +1,98 @@
+# =========================
+
+# Compiled C files
+
+# =========================
+
+*.o
+*.a
+*.so
+*.out
+
+# Executables
+
+allocator/allocator
+translate/translate
+paging/paging
+tlb/tlb
+replace/replace
+shell/shell
+fs/fs
+net/net
+
+# =========================
+
+# Build directories
+
+# =========================
+
+build/
+bin/
+obj/
+dist/
+
+# =========================
+
+# Debug / profiling files
+
+# =========================
+
+*.dSYM/
+*.gcda
+*.gcno
+*.gcov
+core
+core.*
+vgcore.*
+
+# =========================
+
+# Dependency files
+
+# =========================
+
+*.d
+
+# =========================
+
+# IDE / Editor files
+
+# =========================
+
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# =========================
+
+# OS-generated files
+
+# =========================
+
+.DS_Store
+Thumbs.db
+
+# =========================
+
+# Temporary files
+
+# =========================
+
+*.tmp
+*.temp
+*.log
+
+# =========================
+
+# Environment / local config
+
+# =========================
+
+.env
+.env.*
+
+# Keep example environment files if needed
+
+!.env.example
