@@ -50,8 +50,17 @@ void *my_malloc(size_t size) {
     return NULL;
   }
 
-  header->size = size;
-  header->magic = MAGIC;
+  if (header->size >= size + sizeof(struct mem_header) + 1) {
+    size_t remaining_size = header->size - size - sizeof(struct mem_header);
+    struct mem_header *next_header =
+        (struct mem_header *)((char *)header + sizeof(struct mem_header) +
+                              size);
+    next_header->size = remaining_size;
+    next_header->magic = MAGIC;
+    next_header->status = FREE;
+    header->size = size;
+  }
+
   header->status = ALLOCATED;
 
   void *user_ptr = (void *)((char *)header + sizeof(struct mem_header));
@@ -60,6 +69,10 @@ void *my_malloc(size_t size) {
 }
 
 void my_free(void *ptr) {
+  if (ptr == NULL) {
+    return;
+  }
+
   struct mem_header *header =
       (struct mem_header *)((char *)ptr - sizeof(struct mem_header));
 
@@ -74,13 +87,28 @@ void my_free(void *ptr) {
 int main() {
   init_heap();
 
-  int *p = my_malloc(sizeof(int));
+  // 1. Allocate three separate integers
+  int *a = my_malloc(sizeof(int));
+  int *b = my_malloc(sizeof(int));
+  int *c = my_malloc(sizeof(int));
 
-  *p = 42;
+  *a = 10;
+  *b = 20;
+  *c = 30;
 
-  printf("Value of p: %d\n", *p);
+  printf("a: %d at %p\n", *a, (void *)a);
+  printf("b: %d at %p\n", *b, (void *)b);
+  printf("c: %d at %p\n", *c, (void *)c);
 
-  printf("Address of p: %p\n", (void *)p);
+  // 2. Free 'b'
+  printf("\nFreeing b...\n");
+  my_free(b);
+
+  // 3. Allocate 'd' — should reuse the slot freed by 'b'!
+  int *d = my_malloc(sizeof(int));
+  *d = 99;
+  printf("d: %d at %p (reused b's slot? %s)\n", *d, (void *)d,
+         (d == b) ? "YES!" : "NO");
 
   return 0;
 }
