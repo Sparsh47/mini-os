@@ -1,7 +1,12 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c11 -I../common
 
-.PHONY: all
+.PHONY: all clean
 
-all:
-	$(CC) $(CFLAGS) mymalloc.c -o mymalloc
+all: mymalloc
+
+mymalloc: mymalloc.c policies.c mymalloc.h policies.h
+	$(CC) $(CFLAGS) mymalloc.c policies.c -o mymalloc
+
+clean:
+	rm -f mymalloc

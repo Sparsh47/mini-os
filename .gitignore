@@ -12,6 +12,7 @@
 # Executables
 
 allocator/allocator
+allocator/mymalloc
 translate/translate
 paging/paging
 tlb/tlb
