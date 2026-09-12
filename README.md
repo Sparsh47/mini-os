@@ -8,7 +8,7 @@ A hands-on, modular implementation of fundamental operating system concepts in C
 
 ```
 mini-os/
-├── allocator/        # Custom heap memory allocator (first-fit, block splitting, headers)
+├── allocator/        # Custom heap memory allocator (search policies, splitting, coalescing, benchmarking)
 ├── shell/            # Interactive Unix shell (fork-exec, command parsing, REPL)
 ├── translate/        # Virtual memory inspector (Linux /proc/[pid]/maps parser)
 ├── common/           # Shared utilities and helper headers
@@ -28,8 +28,19 @@ mini-os/
 ### 1. Custom Memory Allocator (`allocator/`)
 A custom userspace memory allocator implementing core principles of dynamic heap management (`malloc` / `free`):
 * **In-Band Metadata (`struct mem_header`)**: Tracks block size, allocation status (`FREE` vs `ALLOCATED`), and a magic watermark (`0xDEADBEEF`) to detect heap corruption.
-* **First-Fit Search**: Scans the simulated 4KB heap sequentially to find the first free block large enough for the requested allocation.
+* **Pluggable Placement Policies (`policies.c`)**:
+  * **First-Fit**: Scans sequentially to return the first large enough block.
+  * **Best-Fit**: Minimizes leftover block fragments by picking the smallest sufficient block.
+  * **Worst-Fit**: Selects the largest available block to leave larger, more usable split remainders.
+  * **Next-Fit**: Continues search from the previous allocation pointer to distribute allocations.
+  * Switch policies at compile-time via `#define ALLOC_POLICY` in `mymalloc.c`.
 * **Block Splitting**: Carves out requested payloads from larger free blocks and dynamically inserts a new free block header for the remaining space.
+* **Block Coalescing**: Scans and merges contiguous adjacent free blocks on `my_free()` to mitigate external fragmentation.
+* **Fragmentation Benchmark Suite (`benchmark.c`)**:
+  * Simulates realistic allocation/deallocation workloads with deterministic seeded random traces.
+  * Quantifies **External Fragmentation** using:
+    $$\text{Fragmentation} = 1.0 - \left(\frac{\text{Largest Free Block}}{\text{Total Free Memory}}\right)$$
+  * Reports allocation success/failure counts, heap block counts (total, free, allocated), and free memory distributions.
 * **Integrity Validation**: Verifies headers and magic signatures before freeing memory.
 
 ```bash
@@ -122,7 +133,7 @@ Contributions, experiments, and new educational modules are welcome! Here’s ho
 * **Modular Structure**: Place shared helper functions in `common/` and keep domain-specific logic self-contained within its respective module directory.
 
 ### 3. Ideas for Contributions
-* **`allocator/`**: Add boundary tag coalescing (bidirectional merging) or best-fit/worst-fit strategies.
+* **`allocator/`**: Add boundary tags for $O(1)$ bidirectional coalescing, segregated free lists, or a buddy allocator.
 * **`paging/`**: Multi-level page table walk simulator with physical address calculation.
 * **`replace/`**: Simulation of LRU, FIFO, and Clock page replacement algorithms.
 * **`shell/`**: Support for I/O redirection (`>`, `<`) and pipes (`|`).

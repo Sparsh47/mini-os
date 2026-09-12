@@ -120,7 +120,6 @@ void split_block(struct mem_header *header, size_t size) {
   }
 
   if (header->size < size + sizeof(struct mem_header)) {
-    fprintf(stderr, "Not enough memory.\n");
     return;
   }
 
@@ -140,9 +139,39 @@ void split_block(struct mem_header *header, size_t size) {
 
 // Coalescing Policy
 
-void coalesce(void) {}
+void coalesce(void) {
+  char *curr = mem_heap;
 
-void coalesce_blocks(void) {}
+  while (curr < mem_heap + HEAP_SIZE) {
+    struct mem_header *header = (struct mem_header *)curr;
+
+    if (header->magic != MAGIC)
+      break;
+
+    if (header->status != FREE) {
+      curr += sizeof(struct mem_header) + header->size;
+      continue;
+    }
+
+    char *next_ptr = (char *)header + sizeof(struct mem_header) + header->size;
+
+    if (next_ptr >= mem_heap + HEAP_SIZE) {
+      break;
+    }
+
+    struct mem_header *next_header = (struct mem_header *)next_ptr;
+
+    if (next_header->magic == MAGIC && next_header->status == FREE) {
+      header->size += sizeof(struct mem_header) + next_header->size;
+      next_header->magic = 0;
+      continue;
+    } else {
+      curr += sizeof(struct mem_header) + header->size;
+    }
+  }
+}
+
+void coalesce_blocks(void) { coalesce(); }
 
 // Free List Inspection
 

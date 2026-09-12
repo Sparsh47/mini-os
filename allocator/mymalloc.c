@@ -1,7 +1,17 @@
+#include "mymalloc.h"
+#include "benchmark.h"
+#include "policies.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "mymalloc.h"
-#include "policies.h"
+
+typedef enum {
+  POLICY_FIRST_FIT,
+  POLICY_BEST_FIT,
+  POLICY_WORST_FIT,
+  POLICY_NEXT_FIT
+} alloc_policy_t;
+
+#define ALLOC_POLICY POLICY_NEXT_FIT
 
 char mem_heap[HEAP_SIZE];
 struct mem_header *allocator_ptr = NULL;
@@ -15,7 +25,22 @@ void init_heap(void) {
 }
 
 void *my_malloc(size_t size) {
-  struct mem_header *header = first_fit_search(size);
+  struct mem_header *header = NULL;
+  switch (ALLOC_POLICY) {
+  case POLICY_FIRST_FIT:
+    header = first_fit_search(size);
+    break;
+  case POLICY_WORST_FIT:
+    header = worst_fit_search(size);
+    break;
+  case POLICY_BEST_FIT:
+    header = best_fit_search(size);
+    break;
+  case POLICY_NEXT_FIT:
+    header = next_fit_search(size);
+    break;
+  }
+
   if (header == NULL) {
     fprintf(stderr, "No memory left\n");
     return NULL;
@@ -50,46 +75,22 @@ void my_free(void *ptr) {
 int main(void) {
   init_heap();
 
-  // 1. Allocate three separate integers
-  int *a = my_malloc(sizeof(int));
-  int *b = my_malloc(sizeof(int));
-  int *c = my_malloc(sizeof(int));
-
-  *a = 10;
-  *b = 20;
-  *c = 30;
-
-  printf("a: %d at %p\n", *a, (void *)a);
-  printf("b: %d at %p\n", *b, (void *)b);
-  printf("c: %d at %p\n", *c, (void *)c);
-
-  printf("\nState of free list after allocating a, b, c:\n");
-  print_free_list();
-
-  // 2. Free 'b'
-  printf("\nFreeing b...\n");
-  my_free(b);
-  print_free_list();
-
-  // 3. Allocate 'd' — should reuse the slot freed by 'b'!
-  int *d = my_malloc(sizeof(int));
-  *d = 99;
-  printf("d: %d at %p (reused b's slot? %s)\n", *d, (void *)d,
-         (d == b) ? "YES!" : "NO");
-
-  // 4. Test Coalescing: Free 'd' and 'c' which are adjacent
-  printf("\nFreeing d and c...\n");
-  my_free(d);
-  my_free(c);
-  print_free_list();
-
-  // Allocate a chunk larger than single slots to confirm merged contiguous space
-  int *large = my_malloc(sizeof(int) * 10);
-  printf("large: allocated at %p (reused coalesced block starting at b? %s)\n",
-         (void *)large, (large == (int *)b) ? "YES!" : "NO");
-
-  my_free(a);
-  my_free(large);
+  printf("\n=== Running Fragmentation Benchmark ===\n");
+  switch (ALLOC_POLICY) {
+  case POLICY_FIRST_FIT:
+    printf("First Fit\n");
+    break;
+  case POLICY_WORST_FIT:
+    printf("Worst Fit\n");
+    break;
+  case POLICY_BEST_FIT:
+    printf("Best Fit\n");
+    break;
+  case POLICY_NEXT_FIT:
+    printf("Next Fit\n");
+    break;
+  }
+  fragmentation_benchmark();
 
   return 0;
 }
